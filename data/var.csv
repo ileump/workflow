@@ -1,0 +1,135 @@
+﻿Metabolite Name,Class,Class total,HMDB link,HMDB ID
+L-Acetylcarnitine,Acyl carnitines,Acyl carnitines,http://www.hmdb.ca/metabolites/HMDB00201,HMDB0000201
+Isovalerylcarnitine,Acyl carnitines,Acyl carnitines,http://www.hmdb.ca/metabolites/HMDB00688,HMDB0000688
+Isobutyrylcarnitine,Acyl carnitines,Acyl carnitines,http://www.hmdb.ca/metabolites/HMDB62556,HMDB0000736
+Hexanoylcarnitine,Acyl carnitines,Acyl carnitines,http://www.hmdb.ca/metabolites/HMDB00705,HMDB0000756
+L-Octanoylcarnitine,Acyl carnitines,Acyl carnitines,http://www.hmdb.ca/metabolites/HMDB00791,HMDB0000791
+Propionylcarnitine,Acyl carnitines,Acyl carnitines,http://www.hmdb.ca/metabolites/HMDB00824,HMDB0000824
+Butyrylcarnitine,Acyl carnitines,Acyl carnitines,http://www.hmdb.ca/metabolites/HMDB02013,HMDB0002013
+Dodecanoylcarnitine,Acyl carnitines,Acyl carnitines,http://www.hmdb.ca/metabolites/HMDB02250,HMDB0002250
+Valerylcarnitine,Acyl carnitines,Acyl carnitines,https://hmdb.ca/metabolites/HMDB0013128,HMDB0013128
+Pivaloylcarnitine,Acyl carnitines,Acyl carnitines,https://hmdb.ca/metabolites/HMDB0041993,HMDB0041993
+3-hydroxyoctanoyl carnitine,Acyl carnitines,Acyl carnitines,http://www.hmdb.ca/metabolites/HMDB61634,HMDB0061634
+O-decanoyl-L-carnitine,Acyl carnitines,Acyl carnitines,http://www.hmdb.ca/metabolites/HMDB62631,HMDB0062631
+(±)-Hexanoylcarnitine,Acyl carnitines,Acyl carnitines,,METLIN 85174
+1-Methylhistidine,Amino acids,Amino acids,https://hmdb.ca/metabolites/HMDB0000001,HMDB0000001
+Betaine,Amino acids,Amino acids,http://www.hmdb.ca/metabolites/HMDB00043,HMDB0000043
+Creatine,Amino acids,Amino acids,https://hmdb.ca/metabolites/HMDB0000064,HMDB0000064
+Glycine,Amino acids,Amino acids,http://www.hmdb.ca/metabolites/HMDB00123,HMDB0000123
+Glutathione,Amino acids,Amino acids,https://hmdb.ca/metabolites/HMDB0000125,HMDB0000125
+L-Glutamic acid,Amino acids,Amino acids,http://www.hmdb.ca/metabolites/HMDB00148,HMDB0000148
+L-Tyrosine,Amino acids,Amino acids,http://www.hmdb.ca/metabolites/HMDB00158,HMDB0000158
+L-Phenylalanine,Amino acids,Amino acids,http://www.hmdb.ca/metabolites/HMDB00159,HMDB0000159
+L-Alanine,Amino acids,Amino acids,https://hmdb.ca/metabolites/HMDB0000161,HMDB0000161
+L-Proline,Amino acids,Amino acids,http://www.hmdb.ca/metabolites/HMDB00162,HMDB0000162
+L-Asparagine,Amino acids,Amino acids,http://www.hmdb.ca/metabolites/HMDB00168,HMDB0000168
+L-Isoleucine,Amino acids,Amino acids,http://www.hmdb.ca/metabolites/HMDB00172,HMDB0000172
+L-Histidine,Amino acids,Amino acids,http://www.hmdb.ca/metabolites/HMDB00177,HMDB0000177
+L-Lysine,Amino acids,Amino acids,http://www.hmdb.ca/metabolites/HMDB00182,HMDB0000182
+L-Serine,Amino acids,Amino acids,http://www.hmdb.ca/metabolites/HMDB00187,HMDB0000187
+L-Aspartic acid,Amino acids,Amino acids,http://www.hmdb.ca/metabolites/HMDB00191,HMDB0000191
+Ornithine,Amino acids,Amino acids,http://www.hmdb.ca/metabolites/HMDB00214,HMDB0000214
+Taurine,Amino acids,Amino acids,https://hmdb.ca/metabolites/HMDB0000251,HMDB0000251
+Pyroglutamic acid,Amino acids,Amino acids,http://www.hmdb.ca/metabolites/HMDB00267,HMDB0000267
+Sarcosine,Amino acids,Amino acids,http://www.hmdb.ca/metabolites/HMDB00271,HMDB0000271
+Urea,Amino acids,Amino acids,https://hmdb.ca/metabolites/HMDB0000294,HMDB0000294
+5-Hydroxy-L-tryptophan,Amino acids,Amino acids,http://www.hmdb.ca/metabolites/HMDB00472,HMDB0000472
+L-Arginine,Amino acids,Amino acids,http://www.hmdb.ca/metabolites/HMDB00517,HMDB0000517
+L-Glutamine,Amino acids,Amino acids,http://www.hmdb.ca/metabolites/HMDB00641,HMDB0000641
+L-Leucine,Amino acids,Amino acids,http://www.hmdb.ca/metabolites/HMDB00687,HMDB0000687
+L-Methionine,Amino acids,Amino acids,http://www.hmdb.ca/metabolites/HMDB00696,HMDB0000696
+N-Acetyl-L-alanine,Amino acids,Amino acids,https://hmdb.ca/metabolites/HMDB0000766,HMDB0000766
+L-Valine,Amino acids,Amino acids,http://www.hmdb.ca/metabolites/HMDB00883,HMDB0000883
+Citrulline,Amino acids,Amino acids,https://hmdb.ca/metabolites/HMDB0000904,HMDB0000904
+L-Tryptophan,Amino acids,Amino acids,http://www.hmdb.ca/metabolites/HMDB00929,HMDB0000929
+"N6,N6,N6-Trimethyl-L-lysine",Amino acids,Amino acids,http://www.hmdb.ca/metabolites/HMDB01325,HMDB0001325
+Symmetric dimethylarginine,Amino acids,Amino acids,http://www.hmdb.ca/metabolites/HMDB01539,HMDB0001539
+Methionine sulfoxide,Amino acids,Amino acids,https://hmdb.ca/metabolites/HMDB0002005,HMDB0002005
+5-methoxy-L-tryptophan,Amino acids,Amino acids,http://www.hmdb.ca/metabolites/HMDB0002339,HMDB0002339
+Oxidized glutathione,Amino acids,Amino acids,https://hmdb.ca/metabolites/HMDB0003337,HMDB0003337
+gamma-Glutamylleucine,Amino acids,Amino acids,https://hmdb.ca/metabolites/HMDB0011171,HMDB0011171
+N-Acetylleucine,Amino acids,Amino acids,https://hmdb.ca/metabolites/HMDB0011756,HMDB0011756
+N-acetyltryptophan,Amino acids,Amino acids,http://www.hmdb.ca/metabolites/HMDB13713,HMDB0013713
+Alanylleucineine,Amino acids,Amino acids,https://hmdb.ca/metabolites/HMDB0028691,HMDB0028691
+Gamma-Glutamyl Glutamine,Amino acids,Amino acids,http://www.hmdb.ca/metabolites/HMDB11738,HMDB0028833
+Leucyl-Aspartate,Amino acids,Amino acids,https://hmdb.ca/metabolites/HMDB0028925,HMDB0028925
+Leucyl-Serine,Amino acids,Amino acids,https://hmdb.ca/metabolites/HMDB0028938,HMDB0028938
+Tyrosyl-Alanine,Amino acids,Amino acids,http://www.hmdb.ca/metabolites/HMDB29098,HMDB0029098
+Tyrosyl-Glutamate,Amino acids,Amino acids,http://www.hmdb.ca/metabolites/HMDB29104,HMDB0029104
+N-Methyl-1H-indole-3-propanamide,Amino acids,Amino acids,http://www.hmdb.ca/metabolites/HMDB32756,HMDB0032756
+N-gamma-L-Glutamyl-L-methionine,Amino acids,Amino acids,http://www.hmdb.ca/metabolites/HMDB34367,HMDB0034367
+Pyroglutamine,Amino acids,Amino acids,http://www.hmdb.ca/metabolites/HMDB62558,HMDB0062558
+Succinyl-leucyl-agmatine,Amino acids,Amino acids,,METLIN 414580
+"tert-Butyl 3-amino-1,4,6,7-tetrahydro-5H-pyrazolo[4,3-c]pyridine-5-carboxylate",Amino acids,Amino acids,,METLIN 862224
+L-2-Aminoadipic acid,Amino acids,Amino acids,https://pubchem.ncbi.nlm.nih.gov/compound/92136#section=2D-Structure,PubChem 92136
+S-Glutathionyl-L-cysteine,Amino acids,Amino acids,,PubChem CID 10455148
+Phenacemide,Benzene,Benzene,http://www.hmdb.ca/metabolites/HMDB15253,HMDB0015253
+Hippuric acid,Benzoic acids,Benzoic acids,https://hmdb.ca/metabolites/HMDB0000714,HMDB0000714
+Taurocholic acid,Bile acids,Bile acids,http://www.hmdb.ca/metabolites/HMDB00036,HMDB0000036
+Glycocholic acid,Bile acids,Bile acids,http://www.hmdb.ca/metabolites/HMDB00138,HMDB0000138
+Cholic acid,Bile acids,Bile acids,http://www.hmdb.ca/metabolites/HMDB00619,HMDB0000619
+Taurodeoxycholic acid,Bile acids,Bile acids,https://hmdb.ca/metabolites/HMDB0000896,HMDB0000896
+Glyceric acid,Carbohydrates,Carbohydrates,http://www.hmdb.ca/metabolites/HMDB00139,HMDB0000139
+Arabinonic acid,Carbohydrates,Carbohydrates,http://www.hmdb.ca/metabolites/HMDB00539,HMDB0000539
+Gluconic acid,Carbohydrates,Carbohydrates,http://www.hmdb.ca/metabolites/HMDB00625,HMDB0000625
+Citric acid,Carboxylic acids,Carboxylic acids,http://www.hmdb.ca/metabolites/HMDB00094,HMDB0000094
+Fumaric acid,Carboxylic acids,Carboxylic acids,http://www.hmdb.ca/metabolites/HMDB00134,HMDB0000134
+Succinic acid,Carboxylic acids,Carboxylic acids,http://www.hmdb.ca/metabolites/HMDB00254,HMDB0000254
+Glutaric acid,Carboxylic acids,Carboxylic acids,https://hmdb.ca/metabolites/HMDB0000661,HMDB0000661
+"3,3'-Thiobispropanoic acid",Carboxylic acids,Carboxylic acids,https://hmdb.ca/metabolites/HMDB0031162,HMDB0031162
+Hydroxyisocaproic acid,Fatty acids,Fatty acids,https://hmdb.ca/metabolites/HMDB0000746,HMDB0000746
+3-Hydroxyisovaleric acid,Fatty acids,Fatty acids,https://hmdb.ca/metabolites/HMDB0000754,HMDB0000754
+2-Hydroxy-2-methylbutyric acid,Fatty acids,Fatty acids,http://www.hmdb.ca/metabolites/HMDB01987,HMDB0001987
+Itaconic acid,Fatty acids,Fatty acids,http://www.hmdb.ca/metabolites/HMDB02092,HMDB0002092
+Glycerophosphocholine,Glycerophosphocholines,Glycerophosphocholines,http://www.hmdb.ca/metabolites/HMDB00086,HMDB0000086
+LysoPC(22:6),Glycerophosphocholines,Glycerophosphocholines,http://www.hmdb.ca/metabolites/HMDB10404,HMDB0010404
+2-Hydroxybutyric acid,Hydroxy acids,Hydroxy acids,https://hmdb.ca/metabolites/HMDB0000008,HMDB0000008
+(R)-3-Hydroxybutyric acid,Hydroxy acids,Hydroxy acids,http://www.hmdb.ca/metabolites/HMDB00011,HMDB0000011
+L-Malic acid,Hydroxy acids,Hydroxy acids,http://www.hmdb.ca/metabolites/HMDB0000156,HMDB0000156
+L-Lactic acid,Hydroxy acids,Hydroxy acids,http://www.hmdb.ca/metabolites/HMDB00190,HMDB0000190
+2-Hydroxyglutarate,Hydroxy acids,Hydroxy acids,https://hmdb.ca/metabolites/HMDB0059655,HMDB0059655
+Allantoin,Imidazoles,Imidazoles,https://hmdb.ca/metabolites/HMDB0000462,HMDB0000462
+5-Hydroxyindoleacetic acid,Indoles,Indoles,http://www.hmdb.ca/metabolites/HMDB00763,HMDB0000763
+Indolelactic acid,Indolyl carboxylic acids,Indolyl carboxylic acids,http://www.hmdb.ca/metabolites/HMDB00671,HMDB0000671
+Tryptophan 2-C-mannoside,Indolyl carboxylic acids,Indolyl carboxylic acids,https://hmdb.ca/metabolites/HMDB0240296,HMDB0240296
+Oxoglutaric acid,Keto acids,Keto acids,http://www.hmdb.ca/metabolites/HMDB00208,HMDB0000208
+Oxalacetic acid,Keto acids,Keto acids,https://hmdb.ca/metabolites/HMDB0000223,HMDB0000223
+Pyruvic acid,Keto acids,Keto acids,http://www.hmdb.ca/metabolites/HMDB00243,HMDB0000243
+Ketoleucine,Keto acids,Keto acids,http://www.hmdb.ca/metabolites/HMDB0000695,HMDB0000695
+Pseudouridine,Nucleosides,Nucleosides,http://www.hmdb.ca/metabolites/HMDB00767,HMDB0000767
+5'-Methylthioadenosine,Nucleosides,Nucleosides,https://hmdb.ca/metabolites/HMDB0001173,HMDB0001173
+3'-AMP,Nucleosides,Nucleosides,https://hmdb.ca/metabolites/HMDB0003540,HMDB0003540
+O-Phosphoethanolamine,Organic phosphoric acids,Organic phosphoric acids,https://hmdb.ca/metabolites/HMDB0000224,HMDB0000224
+Indoxyl sulfate,Organic sulfuric acids,Organic sulfuric acids,http://www.hmdb.ca/metabolites/HMDB00682,HMDB0000682
+p-Cresol sulfate,Organic sulfuric acids,Organic sulfuric acids,http://www.hmdb.ca/metabolites/HMDB11635,HMDB0011635
+Dihydrocaffeic acid 3-sulfate,Organic sulfuric acids,Organic sulfuric acids,http://www.hmdb.ca/metabolites/HMDB41721,HMDB0041721
+Phenol sulphate,Organic sulfuric acids,Organic sulfuric acids,http://www.hmdb.ca/metabolites/HMDB60015,HMDB0060015
+2-methoxyacetaminophen sulfate,Organic sulfuric acids,Organic sulfuric acids,http://www.hmdb.ca/metabolites/HMDB62550,HMDB0062550
+2-hydroxy-3-(sulfooxy)benzoic acid,Organic sulfuric acids,Organic sulfuric acids,https://hmdb.ca/metabolites/HMDB0134105,HMDB0134105
+"2-(2,6-Dioxo-1,2,3,6-tetrahydropyrimidin-4-yl)ethane-1-sulfonic acid",Organic sulfuric acids,Organic sulfuric acids,,METLIN 816036
+L-Kynurenine,Organooxygen,Organooxygen,http://www.hmdb.ca/metabolites/HMDB00684,HMDB0000684
+D-Phenyllactic acid,Phenylpropanoic acids,Phenylpropanoic acids,http://www.hmdb.ca/metabolites/HMDB00563,HMDB0000563
+Hydroxyphenyllactic acid,Phenylpropanoic acids,Phenylpropanoic acids,http://www.hmdb.ca/metabolites/HMDB00755,HMDB0000755
+Adenosine,Purine nucleosides,Purine nucleosides,http://www.hmdb.ca/metabolites/HMDB00050,HMDB0000050
+Inosine,Purine nucleosides,Purine nucleosides,http://www.hmdb.ca/metabolites/HMDB00195,HMDB0000195
+1-Methylguanosine,Purine nucleosides,Purine nucleosides,http://www.hmdb.ca/metabolites/HMDB01563,HMDB0001563
+8-Hydroxy-deoxyguanosine,Purine nucleosides,Purine nucleosides,https://hmdb.ca/metabolites/HMDB0003333,HMDB0003333
+2-Methylguanosine,Purine nucleosides,Purine nucleosides,https://hmdb.ca/metabolites/HMDB0005862,HMDB0005862
+Succinyladenosine,Purine nucleosides ,Purine nucleosides ,http://www.hmdb.ca/metabolites/HMDB00912,HMDB0000912
+Guanine,Purines,Purines,http://www.hmdb.ca/metabolites/HMDB00132,HMDB0000132
+Hypoxanthine,Purines,Purines,http://www.hmdb.ca/metabolites/HMDB00157,HMDB0000157
+Uric acid,Purines,Purines,http://www.hmdb.ca/metabolites/HMDB00289,HMDB0000289
+Xanthine,Purines,Purines,http://www.hmdb.ca/metabolites/HMDB00292,HMDB0000292
+Oxypurinol,Purines,Purines,http://www.hmdb.ca/metabolites/HMDB00786,HMDB0000786
+Allopurinol,Purines,Purines,http://www.hmdb.ca/metabolites/HMDB14581,HMDB0014581
+4-Pyridoxic acid,Pyridines,Pyridines,https://hmdb.ca/metabolites/HMDB0000017,HMDB0000017
+Nornicotine,Pyridines,Pyridines,http://www.hmdb.ca/metabolites/HMDB01126,HMDB0001126
+Niacinamide,Pyridines,Pyridines,http://www.hmdb.ca/metabolites/HMDB01406,HMDB0001406
+Uridine,Pyrimidine nucleosides,Pyrimidine nucleosides,http://www.hmdb.ca/metabolites/HMDB00296,HMDB0000296
+Ribothymidine,Pyrimidine nucleosides,Pyrimidine nucleosides,http://www.hmdb.ca/metabolites/HMDB00884,HMDB0000884
+Xanthosine,Pyrimidine nucleotides,Pyrimidine nucleotides,http://www.hmdb.ca/metabolites/HMDB00299,HMDB0000299
+L-Carnitine,Quaternary ammonium salts,Quaternary ammonium salts,http://www.hmdb.ca/metabolites/HMDB00062,HMDB0000062
+Choline,Quaternary ammonium salts,Quaternary ammonium salts,http://www.hmdb.ca/metabolites/HMDB00097,HMDB0000097
+Acetylcholine,Quaternary ammonium salts,Quaternary ammonium salts,https://hmdb.ca/metabolites/HMDB0000895,HMDB0000895
+Phosphorylcholine,Quaternary ammonium salts,Quaternary ammonium salts,https://hmdb.ca/metabolites/HMDB0001565,HMDB0001565
+Kynurenic acid,Quinoline carboxylic acids,Quinoline carboxylic acids,https://hmdb.ca/metabolites/HMDB0000715,HMDB0000715

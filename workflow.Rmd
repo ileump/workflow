@@ -1,0 +1,1407 @@
+---
+title: "Workflow"
+bibliography: local.bib
+link-citations: yes
+output:
+  html_document: 
+    toc: yes
+    toc_float:
+      toc_collapsed: yes
+    toc_depth: 4
+    keep_md: yes
+    mode: selfcontained
+    css: css/style-1.css
+    number_sections: yes
+  word_document: default
+biblio-style: apalike
+---
+
+```{r include=F, echo=F, message=F, warnings=F}
+source('rscript/setup.R')
+source('rscript/functions.R')
+source('rscript/app_functions.R')
+source('rscript/pathway_funs.R', encoding = 'UTF-8')
+source('rscript/app_functions_2.R')
+
+options(useFancyQuotes = FALSE)
+options(java.parameters = '-Xmx8000m')
+
+knitr::opts_chunk$set(
+  cache = T,
+  message = F,
+  dpi = 300
+)
+
+## English locale
+## 通路数据库采用的是KEGG<U+4EBA><U+7C7B>通路数据库
+Sys.setlocale(locale = "Chinese")
+
+# library(plyr)
+library(ggplot2)
+library(magrittr)
+library(MetaboAnalystR)
+library(kableExtra)
+library(dplyr)
+library(DT)
+library(plyr)
+library(grid)
+library(stringi)
+library(ComplexHeatmap)
+
+library(extrafont)
+loadfonts(device = 'win', quiet = T)
+par(family = 'Liberation')
+windowsFonts(
+  serif = 'Liberation Serif',
+  sans = 'Liberation Sans',
+  mono = 'Liberation Mono'
+)
+par(family = 'sans')
+## set document font family in _output.yml
+
+output_dir <- file.path('output/')
+if (!dir.exists(output_dir)) {
+    dir.create(output_dir, recursive = T)
+}
+```
+
+```{r read input files, results = 'asis', include = T}
+cat('\n\n')
+cat(
+  '#',
+  'Workflow',
+  '\n\n'
+  )
+cat('\n\n')
+file.xlsx <- '/Users/leump/Desktop/Metabolome_workflow/data/QC.xlsx'
+d.data <- XLConnect::readWorksheetFromFile(
+  file.xlsx,
+  sheet = 'data.csv',
+  check.names = F,
+  rownames = 1
+)
+d.sample <- XLConnect::readWorksheetFromFile(
+  file.xlsx,
+  sheet = 'sample.csv',
+  check.names = F,
+  rownames = 1
+)
+d.var <- XLConnect::readWorksheetFromFile(
+  file.xlsx,
+  sheet = 'var.csv',
+  check.names = F,
+  rownames = 1
+)
+
+testthat::expect_equal(
+  rownames(d.sample),
+  rownames(d.data)
+)
+testthat::expect_equal(
+  rownames(d.var),
+  colnames(d.data)
+)
+```
+
+```{r metabolome summary, results = 'asis', include = T, fig.width = 6, fig.height = 4}
+cat('\n\n')
+cat(
+  '##',
+  '代谢组总结(metabolome)',
+  '\n\n'
+  )
+cat('\n\n')
+cat(
+  '###',
+  '代谢物统计图(metabolome summary)',
+  '\n\n'
+  )
+output_dir <- 'output/'
+tbl <- table(d.var[, "Class"])
+d <- data.frame(class = names(tbl), n = as.vector(tbl)) %>% 
+     dplyr::filter(stringr::str_trim(class) != '')
+Metabolome_Summary <- ggplot(d, aes(x = class, y = n, label = n)) +
+                      geom_bar(stat = 'identity', fill = 'gray40') +
+                      geom_text(vjust = -0.2) +
+                      scale_y_continuous(expand = expansion(mult = c(0, 0.1), add = c(0, 0))) +
+                      labs(x = '', y = 'Count', title = paste('Metabolome', 'summary')) +
+                      theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)
+                      )
+Metabolome_Summary
+ggsave(plot = Metabolome_Summary, file.path(output_dir, 'Metabolome_Summary.pdf'), w = 6, h = 4)
+ggsave(plot = Metabolome_Summary, file.path(output_dir, 'Metabolome_Summary.tiff'),
+       w = 6, h = 4, units = 'in', compression = 'lzw+p', dpi = 300)
+```
+
+```{r qc, results = 'asis', include = T, fig.width = 6, fig.height = 6}
+cat('\n\n')
+cat(
+  '###',
+  '质量控制(qc)',
+  '\n\n'
+  )
+output_dir <- 'output/'
+d <- d.data[c(1:43), ]
+g <- factor(d.sample$Group[1:43])
+pca <- FactoMineR::PCA(d, scale.unit = TRUE, graph = FALSE)
+PCA_QC_ind <- factoextra::fviz_pca_ind(FactoMineR::PCA(d), 
+                                       habillage = g,
+                                       axes = c(1,2),
+                                       label = F,
+                                       pointsize = 4, 
+                                       mean.point = F)
+PCA_QC_ind
+ggsave(plot = PCA_QC_ind, file.path(output_dir, 'QC_PCA_individual.pdf'), w = 6, h = 6)
+ggsave(plot = PCA_QC_ind, file.path(output_dir, 'QC_PCA_individual.tiff'), 
+       w = 6, h = 6, units = 'in', compression = 'lzw+p', dpi = 300)
+# Pairs_QC
+library(GGally)
+library(rlang)
+
+d <- log10(t(d.data[g == 'QC', ])) 
+d[!is.finite(d)] <- NA
+d <- as.data.frame(d)
+
+Pairs_QC <- GGally::ggpairs(d) + theme_bw()
+Pairs_QC
+
+ggsave(plot = Pairs_QC, file.path(output_dir, 'QC_Pairs.pdf'), w = 6, h = 6)
+ggsave(plot = Pairs_QC, file.path(output_dir, 'QC_Pairs.tiff'), 
+       w = 6, h = 6, units = 'in', compression = 'lzw+p', dpi = 300)
+```
+
+```{r pca, results = 'asis', include = T}
+cat('\n\n')
+cat(
+  '##',
+  '主成分分析(pca)',
+  '\n\n'
+  )
+  cat("
+变量很多的数据集当中，通常很多的变量之间会有一定的相关性。因此可以通过一些线性转获得能最大程度代表整体变化方向的维度，也就是主成分，从而降低数据的维度并能保留大部分原始数据的信息。主成分分析是一种常用的降维方法，通过找到一组互相不相关新变量来最大化表达原有数据的信息，让转换得到的数据更容易可视化和理解。主成分分析（PCA）也是代谢组学最常用的分析之一，可以从得分图看到不同样品之间的整体差异情况。比如可以观察不同的分组是否分开，具体在哪一个主成分上分开，以及同一组的样品的离散程度。如果有明显的离群值就值得我们特别的关注，可以查看原始数据或者利用热图找到这个样品的哪些代谢物含量过高或者过低。需要注意的是，仅通过统计分析的方法常常并不能完全准确的确定异常的样品，没有一个客观的阈值，还是需要研究者综合考虑。对各个主成分的贡献最大的代谢物也用柱状图呈现了出来，结合得分图我们可以大概了解样品在哪些代谢物的含量上有区别。左上碎石图显示主成分解释X变量方差的比例。越靠前的主成分解释的比例会越高，然后会逐渐过渡到平滑的区间。选择关注的主成分的数量时，一般会保留图中有较大落差的部分，也就是图形平滑之前的部分，实际中常用的通常是前2-3个主成分。其它的载荷图显示了在每个主成分上的载荷最高的前10个变量，载荷也称作贡献度，反映了变量和主成分之间的相关性。\n\n")
+```
+
+```{r pca_scree, results = 'asis', include = T, fig.width = 10, fig.height = 10}
+cat('\n\n')
+cat(
+  '###',
+  '碎石图+载荷图(scree plot & loading plot)',
+  '\n\n'
+  )
+output_dir <- 'output/'
+d <- d.data[c(1:38), ]
+g <- factor(d.sample$Group[1:38],
+                levels =c("Group1",
+                          "Group2",
+                          "Group3"
+                          ))
+NPC <- 2
+# scree.plot
+pca <- FactoMineR::PCA(d, scale.unit = TRUE, graph = FALSE)
+ggtheme.loading <- theme_bw() + theme(axis.text.x = element_text(angle = 80, hjust = 1))
+
+scree.plot <- factoextra::fviz_screeplot(pca, addlabels = TRUE) +
+                          scale_y_continuous(expand = expansion(mult = c(0.05, 0.05), 
+                                                                add = c(0, 5))) +
+                          scale_x_discrete(expand = expansion(mult = c(0.05, 0.05), 
+                                                              add = c(0.25, 0.6))) +
+                          ggtheme.loading
+
+lst.plot <- lapply(1: NPC, function(x) {
+                   factoextra::fviz_contrib(pca, 
+                                            choice = "var",
+                                            axes = x,
+                                            top = 10
+                                            ) + 
+                   labs(x = '') + 
+                   ggtheme.loading
+                   })
+
+lst.all <- vector(mode = 'list', length = 1 + length(lst.plot))
+lst.all[[1]] <- scree.plot
+lst.all[2:length(lst.all)] <- lst.plot
+
+PCA_scree <- do.call(purrr::partial(gridExtra::grid.arrange, ncol = 2,), lst.all)
+PCA_scree
+ggsave('PCA_scree.pdf', PCA_scree, file.path(output_dir), device = cairo_pdf, 
+       w = 10, h = 10, units = 'in')
+ggsave('PCA_scree.tiff', PCA_scree, file.path(output_dir), device = 'tiff', 
+       w = 10, h = 10, units = 'in', compression = 'lzw+p', dpi = 300)
+```
+
+```{r pca_ind, results = 'asis', include = T, fig.width = 6, fig.height = 4}
+cat('\n\n')
+cat(
+  '###',
+  '主成分得分图(individual plot)',
+  '\n\n'
+  )
+output_dir <- 'output/'
+d <- d.data[c(1:38), ]
+g <- factor(d.sample$Group[1:38],
+                levels =c("Group1",
+                          "Group2",
+                          "Group3"
+                          ))
+pca <- FactoMineR::PCA(d, scale.unit = TRUE, graph = FALSE)
+npc <- 2
+comps <- list()
+ for (i in 1:(npc - 1)) {
+   for (j in (i+1) : npc)
+     comps[[length(comps) + 1]] <- c(i, j)
+ }
+# pca_ind
+pca_ind <- factoextra::fviz_pca_ind(
+    X = pca, axes = comps[[1]],
+    repel = F, # hide individual labels
+    habillage = g, # color by groups
+    # palette = cbPalette,
+    label = "all",
+    mean.point = T,
+    addEllipses = T, # Concentration ellipses
+    ellipse.type = 'norm',
+    ellipse.level = 0.95,
+    title = ''
+    ) + theme_bw()
+pca_ind
+ggsave('PCA_ind.pdf', pca_ind, file.path(output_dir), device = cairo_pdf, 
+       w = 6, h = 4, units = 'in')
+ggsave('PCA_ind.tiff', pca_ind, file.path(output_dir), device = 'tiff', 
+       dpi = 300, width = 6, height = 4, units = 'in',
+       compression = 'lzw+p')
+```
+
+```{r heatmap, results = 'asis', include = T, fig.width = 12, fig.height = 18}
+cat('\n\n')
+cat(
+  '##',
+  '聚类与热图(heatmap)',
+  '\n\n'
+  )
+  cat("
+除了主成分分析之外，组学研究中也经常用热图来观察样品的整体差异，可以方便发现异常值。热图用两种颜色来表示代谢物的含量高低。由于不同的代谢物含量差异比较大，我们会先将所有的代谢物标准化，这样所有样品中该代谢物的平均值接近于0会呈现为白色，低于平均值会成为负值，而高于平均值则为正值，颜色越深代表离平均值的差距越大。热图右边的色条表示颜色对应的数值，数值的意义表示是距离平均值多少个标准差。\n\n")
+output_dir <- 'output/'
+d <- d.data[c(1:38), ]
+g <- d.sample[stringr::str_detect(d.sample$Group, 'Group'), ]
+## scale
+scale_rows = function(x){
+  m = apply(x, 1, mean, na.rm = T)
+  s = apply(x, 1, sd, na.rm = T)
+  return((x - m) / s)
+}
+scale_mat = function(mat, scale){
+  if(!(scale %in% c("none", "row", "column"))){
+      stop("scale argument shoud take values: 'none', 'row' or 'column'")
+  }
+  mat = switch(scale, 
+               none = mat, 
+               column = scale_rows(mat), 
+               row = t(scale_rows(t(mat)))
+               )
+  return(mat)
+}
+d <- scale_mat(d, "row")
+
+## color
+border_color <- 'gray'
+color <- colorRampPalette(c("navy", "white", "firebrick3"))(3)
+
+gg_color_hue <- function(n) {
+  hues = seq(15, 375, length = n + 1)
+  hcl(h = hues, l = 65, c = 100)[1: n]
+}
+
+gg_color_hue_row <- function(n) {
+  set.seed(123)
+  hues = sample(15:375, n + 1 , replace = F)
+  hcl(h = hues, l = 65, c = 100)[1: n] 
+}
+
+## annotation
+# col
+col_sample <- g$Group
+ncol_name <- nlevels(factor(g[, "Group"]))
+col_name <- levels(factor(g[, "Group"]))
+col_cols <- gg_color_hue(ncol_name)
+top_annotation <-  HeatmapAnnotation(Group = g$Group,
+                                     col = list('Group' = structure(col_cols, 
+                                                                  names = c(col_name))
+                                                ),
+                                     # annotation_name_gp = gpar(fontface = 'bold'),
+                                     gp = gpar(col = "gray")
+                                     )
+# row
+nrow_name <- nlevels(factor(d.var[, "Class"]))
+row_name <- levels(factor(d.var[, "Class"]))
+row_cols <- gg_color_hue_row(nrow_name)
+left_annotation = rowAnnotation(Class = d.var$Class,
+                                col = list('Class' = structure(row_cols,
+                                                               names = c(row_name))
+                                           ),
+                                # annotation_name_gp = gpar(fontface = 'bold'),
+                                gp = gpar(col = "gray")
+                                )
+
+Heatmap <- ComplexHeatmap::Heatmap(
+  t(d),
+  name = 'SD',
+  ## color
+  col = circlize::colorRamp2(breaks = c(min(d), 0, max(d)), colors = color),
+  rect_gp = gpar(col = border_color),
+
+  ## cluster
+  cluster_rows = F,
+  cluster_columns = F,
+
+  ## row_names & fontsize
+  show_row_names = T,
+  row_names_gp = gpar(fontsize = 10),
+
+  ## col_names & fontsize
+  show_column_names = T,
+  column_names_gp = gpar(fontsize = 10),
+
+  ## annotation
+  top_annotation = top_annotation,
+  left_annotation = left_annotation,
+  
+  ## annotation_size
+  heatmap_legend_param = list(legend_height = unit(2, 'in'),
+                              legend_weight = unit(2, 'in')
+                              )
+  )
+draw(Heatmap, 
+     merge_legends = T,
+     align_heatmap_legend = 'heatmap_top',
+     legend_grouping = 'original'
+     )
+
+cairo_pdf(paste0(output_dir, 'Heatmap', '.pdf'), width = 12, height = 18, onefile = T)
+draw(Heatmap,
+     merge_legends = T,
+     align_heatmap_legend = 'heatmap_top',
+     legend_grouping = 'original'
+     )
+dev.off()
+
+tiff(paste0(output_dir, 'Heatmap', '.tiff'), res = 300, width = 12, height = 18, compression = "lzw+p", units = 'in')
+draw(Heatmap, 
+     merge_legends = T,
+     align_heatmap_legend = 'heatmap_top',
+     legend_grouping = 'original'
+     )
+dev.off()
+```
+
+```{r oplsda, results = 'asis', include = T, fig.width = 8, fig.height = 12}
+cat('\n\n')
+cat(
+  '##',
+  '正交偏最小二乘判别分析(opls-da)',
+  '\n\n'
+  )
+  cat("
+主成分分析和聚类都是非监督学习，也就是建模的时候并没有利用分组的信息，而仅仅是利用代谢物的含量，只是在可视化的时候把不同的分组标注上去。非监督学习通常不能利用分组之间的差异将样品区分开。为了更好的区分不同的分组，就可以用监督学习的方法。而代谢组学研究中最常用的监督学习方法是正交偏最小二乘判别分析，也就是OPLS-DA。OPLS-DA和PLS-DA比较接近，PLS方法会找到许多和分组相关的成分，而OPLS(Trygg and Wold 2002)方法能够将X变量中与Y变量相关的信息集中在第一个主成分中，而其它的正交成分和Y无相关性，仅反映X中的内部结构。这样仅有一个成分用于预测，更容易理解和可视化。正交成分的个数的最优值是通过交叉验证得到，但有时正交成分并不显著，这时的模型就仅有一个预测成分，而没有正交成分。
+OPLS-DA得分图显示的是样本在预测成分（x轴）和正交成分（y轴）维度上的分布和分组的分布区间（Mahalanobis ellipse）。有的时候可能没有发现显著的正交成分，即正交成分的个数为0，就仅画出预测成分的得分图。
+R2X, R2Y分别是模型对X变量的解释性和Y变量的解释性，完全解释则数值为１。Q2Y是模型的预测性，最大值为１。解释性和预测性的区别在于，解释性反映了模型和建模数据的符合程度，而预测性反映了模型对于测试数据的预测能力，一般会更接近实际运用中对于未知样本的预测能力。合适的模型通常有比较高的R2Y和Q2Y的值。需要注意的是，对于不同的研究代谢组数据的模型表现可能会有区别，比如异质性高，表型和代谢相关性较弱的情况下，模型表现会比较差，建议参考同类型的研究来评估模型的表现。
+左上图表示的是随机置换Y以后得到的模型结果（用点表示）与原有模型结果（用两条水平线表示）的比较。P值是随机置换模型取得更高R2Y/Q2Y得分的比例。原有模型的R2Y和Q2Y如果明显好于随机置换后的结果，表明模型拟合得很好。如果研究样本量小于变量个数,或者随机置换的模型指标接近原有模型，容易有过拟合的问题，结果解读需谨慎。
+异常值检测图会把距离样本分布区域中心较远的值标注出来，可能是潜在的异常值，可以考虑结合主成分分析、热图还有原始数据综合判断。最后的ROC图是通过预测成分与分组的比较得到的。ROC图中曲线下方的面积，即AUC（Area Under the Curve），是最常用的评价分类模型表现的指标，AUC越接近于1模型的表现越好。ROC图的X轴和Y轴分别表示的是模型的特异性和敏感性。ROC是一条曲线而不是一个单一的点，因为OPLS-DA模型对于一个样品的分类结果是一个连续的数,两个组分别在0的两边。通过选择不同的阈值可以得到不同的分类结果，对应一个特异性和敏感性的值，或者是ROC曲线上的一个点。一系列这样的点连在一起组成了ROC曲线。计算特异性和敏感性需要设定一个阴性组合一个阳性组，比如野生型或者健康对照一般会当做阴性组，对应的阴性组和阳性组见图下方的说明。需要注意的是，在样品数量比较少的时候，即使AUC很高可能并不具有实际意义，一个原因是样本可能不能代表现实中的个体差异。
+类似于主成分分析，不同的变量对于模型分类能力的贡献也是不一样的。在OPLS-DA分析中会得到所有代谢物的VIP值，通常VIP>1是一个代谢物可以考虑用作生物标记物的必要条件，VIP值越大则其重要性越高。OPLS-DA只能用在两组分类的情况下，不同的两组间的比较得到的VIP值也是不同的。
+总结起来，运用OPLS-DA模型的时候，先考虑研究的目的是否需要一个预测的模型，如果希望展示生物标记物的预测能力，OPLS-DA是一个常用的模型。模型的现实意义和普适性，依赖于有代表性的样本和足够大的样品数量。报告中的OPLS-DA结果解读，可以先看看得分图中的区分情况，注意R2Y和Q2Y的得分。重要的是要看置换实验中P值是否大于0.05，如果是，模型的区分结果和AUC可能会被高估（通常是样品数量过少）。\n\n")
+output_dir <- 'output/'
+d <- d.data[c(1:38), ]
+d <- scale(d, center = T, scale = T)
+## remove columns with NA
+d <- d[, apply(d, 2, function(x) {!any(is.na(x))})]
+g <- factor(d.sample$Group[1:38],
+                levels =c("Group1",
+                          "Group2",
+                          "Group3"))
+
+opls_list <- apply(combn(levels(g), 2), 2, function(x) {
+                  ind <- which(g %in% x)
+                  d_ind <- d[ind, ]
+                  g_ind <- g[ind, drop = T]
+                  gpls <- ropls::opls(d_ind, g_ind, 
+                                      predI = 1, orthoI = 1, fig.pdfC = 'none',
+                                      crossvalI = min(7, nrow(d_ind))
+                                      )
+                  }) 
+for(i in 1:length(opls_list)) {
+    par(mfrow = c(3, 2))
+    permutation <- ropls::plot(opls_list[[i]], typeVc = 'permutation', parDevNewL = F)
+    overview <- ropls::plot(opls_list[[i]], typeVc = 'overview', parDevNewL = F)
+    outlier <- ropls::plot(opls_list[[i]], typeVc = 'outlier', parDevNewL = F)
+    x_score <- ropls::plot(opls_list[[i]], typeVc = 'x-score', parDevNewL = F, parCexMetricN = 0.8)
+    ROC <- pROC::plot.roc(pROC::roc(attr(opls_list[[i]], 'suppLs')$y,
+                              attr(opls_list[[i]], 'scoreMN')[, 1]),
+                          print.auc = T, print.auc.cex = 2,
+                          main = 'ROC')
+}
+
+for(i in 1:length(opls_list)) {
+  oplsda <- opls_list[[i]]
+
+  ## filename
+  filename_pdf <- file.path(
+  output_dir,
+  paste0('OPLSDA_', 
+         fs::path_sanitize(paste0(levels(attr(oplsda, 'suppLs')$y), 
+                collapse = '_'), replacement = '_'),
+         '.pdf'))
+  
+  filename_tiff <- file.path(
+  output_dir,
+  paste0('OPLSDA_', 
+         fs::path_sanitize(paste0(levels(attr(oplsda, 'suppLs')$y), 
+                collapse = '_'), replacement = '_'),
+         '.tiff'))  
+  ## pdf
+  cairo_pdf(file = filename_pdf, width = 8, height = 12, onefile = T) 
+  if(ropls::getSummaryDF(oplsda)['ort'] > 0) {
+    par(mfrow = c(3, 2))
+    permutation <- ropls::plot(opls_list[[i]], typeVc = 'permutation', parDevNewL = F)
+    overview <- ropls::plot(opls_list[[i]], typeVc = 'overview', parDevNewL = F)
+    outlier <- ropls::plot(opls_list[[i]], typeVc = 'outlier', parDevNewL = F)
+    x_score <- ropls::plot(opls_list[[i]], typeVc = 'x-score', parDevNewL = F, parCexMetricN = 0.8)
+    ROC <- pROC::plot.roc(pROC::roc(attr(opls_list[[i]], 'suppLs')$y,
+                              attr(opls_list[[i]], 'scoreMN')[, 1]),
+                          print.auc = T, print.auc.cex = 2,
+                          main = 'ROC')
+    } else {
+    par(mfrow = c(2, 2))
+    permutation <- ropls::plot(opls_list[[i]], typeVc = 'permutation', parDevNewL = F)
+    overview <- ropls::plot(opls_list[[i]], typeVc = 'overview', parDevNewL = F)
+    outlier <- ropls::plot(opls_list[[i]], typeVc = 'outlier', parDevNewL = F)
+    x_score <- ropls::plot(opls_list[[i]], typeVc = 'x-score', parDevNewL = F, parCexMetricN = 0.8)
+    }
+  dev.off()
+  
+  ## tiff
+  tiff(file = filename_tiff, width = 8, height = 12,
+       units = 'in', res = 300, compression = 'lzw+p')
+  if(ropls::getSummaryDF(oplsda)['ort'] > 0) {
+    par(mfrow = c(3, 2))
+    permutation <- ropls::plot(opls_list[[i]], typeVc = 'permutation', parDevNewL = F)
+    overview <- ropls::plot(opls_list[[i]], typeVc = 'overview', parDevNewL = F)
+    outlier <- ropls::plot(opls_list[[i]], typeVc = 'outlier', parDevNewL = F)
+    x_score <- ropls::plot(opls_list[[i]], typeVc = 'x-score', parDevNewL = F, parCexMetricN = 0.8)
+    ROC <- pROC::plot.roc(pROC::roc(attr(opls_list[[i]], 'suppLs')$y,
+                              attr(opls_list[[i]], 'scoreMN')[, 1]),
+                          print.auc = T, print.auc.cex = 2,
+                          main = 'ROC')
+    } else {
+    par(mfrow = c(2, 2))
+    permutation <- ropls::plot(opls_list[[i]], typeVc = 'permutation', parDevNewL = F)
+    overview <- ropls::plot(opls_list[[i]], typeVc = 'overview', parDevNewL = F)
+    outlier <- ropls::plot(opls_list[[i]], typeVc = 'outlier', parDevNewL = F)
+    x_score <- ropls::plot(opls_list[[i]], typeVc = 'x-score', parDevNewL = F, parCexMetricN = 0.8)
+    }  
+  dev.off()
+}
+
+## VIP
+for(i in 1:length(opls_list)) {
+  oplsda <- opls_list[[i]]
+  
+  tmp <- data.frame(VIP = sort(attr(oplsda, 'vipVn'), decreasing = T))
+
+  ## filename  
+  filename_csv <- file.path(
+  output_dir,
+  fs::path_sanitize(paste0('VIP_',
+                           paste0(levels(attr(oplsda, 'suppLs')$y), collapse = '_'),
+                           '.csv'), replacement = '_'))
+  write.csv(tmp,
+            file = filename_csv,
+            row.names = T,
+            fileEncoding = 'UTF-8')
+}
+```
+
+```{r hypothesis_test, results = 'asis', include = F}
+cat('\n\n')
+cat(
+  '##',
+  '假设检验(hypothesis_test)',
+  '\n\n'
+  )
+output_dir <- 'output/'
+d <- d.data[c(1:38), ]
+g <- factor(d.sample$Group[1:38],
+                levels =c("Group1",
+                          "Group2",
+                          "Group3"
+                          ))
+
+ht <- sapply(d, function(x) {
+    ## combination of group pairs
+    g_pair <- combn(levels(g), 2)
+    ## Fold change
+    g_fold <- apply(g_pair, 2, function(pair.i) {
+        mean(x[g == pair.i[2]], na.rm = T) /
+            mean(x[g == pair.i[1]], na.rm = T)
+    })
+    ## Fold name
+    names(g_fold) <- apply(g_pair, 2, function(x) {
+        paste0('Fold: ', paste0(rev(x), collapse = '/'))
+    })
+    
+    # unpaired
+    if (nlevels(g) > 2) {    
+    ## parametric, welch's ANOVA
+    param.out <- oneway.test(x ~ g)
+    param.out <- param.out$p.value
+    ## posthoc names replace - by :
+    posthoc.names <- apply(
+                     combn(levels(g),2), 2,
+                     function(x) {paste0(rev(x), collapse=':')})
+    ### post-hoc: tukey and games howell 
+    posthoc.out <- userfriendlyscience::posthocTGH(
+        x, g, 
+        p.adjust = 'none', 
+        formatPvalue = F)
+    posthoc.out$output$tukey <- as.matrix(posthoc.out$output$tukey)
+    rownames(posthoc.out$output$tukey) <- posthoc.names
+    posthoc.out$output$games.howell <- as.matrix(posthoc.out$output$games.howell)
+    rownames(posthoc.out$output$games.howell) <- posthoc.names
+    ## non-parametric, kruskal-wallis
+    nonparam.out <- kruskal.test(x ~ g)
+    nonparam.out <- nonparam.out$p.value
+    ### post-hoc: dunn's test
+    dunn.out <- FSA::dunnTest(x ~ g, method = 'none')
+    dunn.out$res[, 'Comparison'] <- stringr::str_replace(
+        dunn.out$res[, 'Comparison'],
+        ' - ', ':')
+    dunn.out$res <- dunn.out$res[
+        match(
+            combn(levels(g), 2, function(x) { paste0(sort(x), collapse=":") }),
+            dunn.out$res[, 'Comparison']
+        ), ]
+    ## reverse the order
+    paste0Rev <- function(x) {paste0(rev(x), collapse = ':')}
+    dunn.out$res$Comparison <- combn(levels(g), 2, paste0Rev)
+    ## result
+    res <- c(`parametric pvalue` = param.out,
+             posthoc.out$output$tukey[, 'p'],
+             posthoc.out$output$games.howell[, 'p'],
+             `non-parametric pvalue` = nonparam.out,
+             dunn.out$res[, 'P.adj'],
+             g_fold)   
+    ## set names
+    n_comb <- nrow(posthoc.out$output$tukey)
+    names(res)[2:(1 + 2 * n_comb)] <- paste0(
+        rep(c('TukeyHSD: ', 'Games-Howell: '), each = n_comb),
+        names(res)[2:(1 + 2 * n_comb)])
+    names(res)[(3 + 2 * n_comb):(2 + 3 * n_comb)] <- paste0(
+        rep('Dunn: ', n_comb),
+        dunn.out$res$Comparison)   
+    } else {
+    param.out <- t.test(x ~ g)
+    param.out <- param.out$p.value
+    nonparam.out <- wilcox.test(x ~ g)
+    nonparam.out <- nonparam.out$p.value
+    res <- c(`parametric pvalue` = param.out,
+             `non-parametric pvalue` = nonparam.out,
+             g_fold)
+    }
+    res    
+    }) %>% t %>% as.data.frame
+# # paired
+# ht_paired <- sapply(d, function(x) {
+#     order_pair <- order(pair)
+#     x_order <- x[order_pair]
+#     g_order <- g[order_pair]
+#     paired.t.out <- t.test(x_order[g1], x_order[g2], paired = T)
+#     paired.wilcox.out <- wilcox.test(x_order[g1], x_order[g2], paired = T)
+#
+#     g1 <- which(g_order == levels(g)[1])
+#     g2 <- which(g_order == levels(g)[2])
+#     g_fold <- median(x_order[g2] / x_order[g1], na.rm = T)
+#
+#     c(paired.t.out$p.value, 
+#       paired.wilcox.out$p.value,
+#       g_fold)
+# }) %>% t
+# colnames(ht_paired) <- c('parametric pvalue', 
+#                          'non-parametric pvalue', 
+#                          paste0('Fold: ', levels(g)[2], '/', levels(g)[1])
+#                          )
+filename_csv <- file.path(output_dir, 'Hypothesis_test.csv')
+write.csv(
+    ht,
+    file = filename_csv,
+    row.names = T, fileEncoding = 'UTF-8'
+    )
+```
+
+```{r volcano plot, results = 'asis', include = T, fig.width = 8, fig.height = 6}
+cat('\n\n')
+cat(
+  '##',
+  '火山图(volcano plot)',
+  '\n\n'
+  )
+  cat("
+火山图同时展示代谢物的统计学显著程度（P value）和变化的幅度（fold change），能够帮助我们快速直观的发现那些既有统计学差异，也有相对较大的变化幅度的代谢物。倍数变化(fold change)的阈值并没有一个统一的标准，需要根据研究和数据的特点选择合适的值，从而筛选到需要重点关注的代谢物。
+倍数变化超过设定的阈值（大于1）有两种情况：大于该阈值或者小于其倒数。同时满足P值和倍数变化条件的代谢物会被标注出来。为了避免过于密集的文字标注，图中最多只标注了满足P值和倍数变化条件的代谢物中，P值最小的10个。P值采用T检验结果。火山图的标题表示了倍数变化计算时的分子和分母。\n\n")
+output_dir <- 'output/'
+g <- factor(d.sample$Group[1:38],
+                levels =c("Group1",
+                          "Group2",
+                          "Group3"
+                          ))
+method <- c("parametric pvalue",
+            "Games-Howell", 
+            "TukeyHSD", 
+            "non-parametric pvalue",
+            "Dunn",
+            "Fold")[c(2, 6)]
+d.ht <- cbind(ht[, stringr::str_detect(colnames(ht), method[1])], 
+              ht[, stringr::str_detect(colnames(ht), method[2])]
+              ) %>% as.data.frame
+combs <- as.data.frame(combn(levels(g), 2))
+volcano_list <- lapply(combs, function(x) {
+  print(x)
+  d <- d.ht[, c(paste0('Games-Howell', ': ', paste0(rev(x), collapse = ':')),
+                        paste0('Fold: ', x[2], '/', x[1])), drop = F] %>%
+                        data.frame(check.names = F)
+  d[, 'label'] <- rownames(d.ht)
+  colnames(d) <- c('pvalue', 'fold', 'label')
+  d <- d %>% dplyr::mutate(
+             significant <- ifelse(pvalue >= 0.05, 'Not significant', 
+                                   ifelse(fold > 1.5, 
+                                          paste0('P<', 0.05, '&FC>', 1.5),
+                                          ifelse(fold < 1/1.5, 
+                                                 paste0('P<', 0.05, '&FC<1/', 1.5), 
+                                                 'Not significant'
+                                                 ))),
+             label = ifelse(significant != 'Not significant', label, '')
+  ) %>% dplyr::filter(
+        !is.na(pvalue) & !is.na(fold) & is.finite(fold) & fold > 0
+        )
+  color_values <- c('gray40', 'red', 'green') %>%
+  `names<-`(c('Not significant', 
+              paste0('P<', 0.05, '&FC>', 1.5),
+              paste0('P<', 0.05, '&FC<1/', 1.5)
+              ))
+  colnames(d) <- c('pvalue', 'fold', 'label', 'significant')
+  n_sig <- length(which(d$label != ''))
+  if (n_sig > 10) {
+      id_label <- intersect(
+          # order(rank(d[, 'pvalue']) + rank(-abs(log2(d[, 'fold'])))),
+          order(d[, 'pvalue']),
+          which(d$significant != 'Not significant')
+      )[1: 10]
+      d[-id_label, 'label'] <- ''
+  }
+  p <- ggplot(d, aes(x = log2(fold), y = -log10(pvalue))) +
+       geom_point(aes(color = significant)) +
+       scale_color_manual(values = color_values) +
+       ggrepel::geom_text_repel(aes(label = label),
+                                force = 1, max.iter = 2000) +
+       geom_vline(xintercept = log2(1.5), linetype = 'dashed', alpha = 0.5) +
+       geom_vline(xintercept = -log2(1.5), linetype = 'dashed', alpha = 0.5) +
+       geom_hline(yintercept = -log10(0.05), linetype = 'dashed', alpha = 0.5) +
+       scale_x_continuous(
+           limits = c(-max(abs(log2(d$fold))), max(abs(log2(d$fold)))),
+           expand = expansion(mult = c(0.05, 0.05), add = c(0, 0))) +
+       scale_y_continuous(expand = expansion(mult = c(0, 0.05), add = c(0, 0))) +
+       guides(color = guide_legend(title = 'Significant')) +
+       labs(title = paste0(x[2], '/', x[1]), 
+            x = 'log2(fold change)', 
+            y = '-log10(P value)') +
+       theme_bw()
+  p
+  })
+  names(volcano_list) <- apply(combs, 2, function(x) {paste0(rev(x), collapse = '_')})
+
+filename_pdf <- file.path(output_dir, 
+                          paste0('Volcano', '.pdf'))
+cairo_pdf(file = filename_pdf,
+          width = 8,
+          height = 6,
+          onefile = T)
+volcano_list
+dev.off()
+
+volcano_list
+  
+for (i in 1: length(volcano_list)) {
+  filename_tiff <- file.path(
+    output_dir,
+    fs::path_sanitize(paste0('Volcano', '_', names(volcano_list)[i], '.tiff'),
+                      replacement = '_'))
+  ggsave(filename_tiff, volcano_list[[i]],
+         device = 'tiff', dpi = 300,
+         width = 8, height= 6, units = 'in',
+         compression = 'lzw+p')
+}
+```
+
+```{r differential metabolites, results = 'asis', include = T, fig.width = 8, fig.height = 4}
+cat('\n\n')
+cat(
+  '##',
+  '显著差异代谢物图(differential metabolites)',
+  '\n\n'
+  )
+  cat("
+显著差异代谢物图中展示了P值最小的前10个代谢物的倍数变化和P值。 柱状图横坐标表示log2(fold change)，上调为正值而下调为负值。\n\n")
+output_dir <- 'output/'
+g <- factor(d.sample$Group[1:38],
+                levels =c("Group1",
+                          "Group2",
+                          "Group3"
+                          ))
+method <- c("parametric pvalue",
+            "Games-Howell", 
+            "TukeyHSD", 
+            "non-parametric pvalue",
+            "Dunn",
+            "Fold")[c(2, 6)]
+d.ht <- cbind(ht[, stringr::str_detect(colnames(ht), method[1])], 
+              ht[, stringr::str_detect(colnames(ht), method[2])]
+              ) %>% as.data.frame
+max_label <- 10
+title <- paste0(levels(g)[2], '/', levels(g)[1])
+
+## print
+combs <- as.data.frame(combn(levels(g), 2))
+plyr::l_ply(combs, function(x) {
+  print(x)
+  d <- d.ht[, c(paste0('Games-Howell', ': ', paste0(rev(x), collapse = ':')),
+                        paste0('Fold: ', x[2], '/', x[1])), drop = F] %>%
+                        data.frame(check.names = F)
+  d[, 'label'] <- rownames(d.ht)
+  colnames(d) <- c('pvalue', 'fold', 'label')
+  d <- d %>% dplyr::mutate(
+             significant <- ifelse(pvalue >= 0.05, 'Not significant', 
+                                   ifelse(fold > 1.5, 
+                                          paste0('P<', 0.05, '&FC>', 1.5),
+                                          ifelse(fold < 1/1.5, 
+                                                 paste0('P<', 0.05, '&FC<1/', 1.5), 
+                                                 'Not significant'
+                                                 )))
+  ) %>% dplyr::filter(
+        !is.na(pvalue) & !is.na(fold) & is.finite(fold) & fold > 0
+        )
+  
+  ## sort by P value
+  d <- d[order(d$pvalue, decreasing = F), ]
+  ## select top n
+  d <- d[1:min(max_label, nrow(d)), ]
+  d <- d %>% mutate(
+       yval = nrow(d):1
+       )
+  
+  ylim.min <- 0.5
+  ylim.max <- nrow(d)
+  expand.y <- 1
+
+  ## labels in forest plot
+  # labels, could be extended to show more information
+  table_plot <- ggplot(d) +
+                theme_bw() +
+                geom_text(aes(label = label, x = 0, y = yval - 0.2), hjust = 0,
+                          ) +
+                theme(axis.text = element_blank(),
+                      axis.title = element_blank(),
+                      axis.ticks = element_blank(),
+                      panel.grid = element_blank(),
+                      panel.border = element_blank()
+                      ) +
+                scale_y_continuous(expand = c(0, expand.y), limits = c(ylim.min, ylim.max)) +
+                xlim(0, 3)
+  # Forest plot
+  forest1 <- ggplot(d, aes(x = yval, y = log2(fold))) +
+             theme_bw() +
+             geom_bar(stat = 'identity', position = 'dodge') +
+             geom_hline(yintercept = 0) +
+             theme(axis.line.x = element_line(),
+                   axis.text.y = element_blank(),
+                   axis.title.y = element_blank(),
+                   axis.ticks.y = element_blank(),
+                   panel.grid.major.y = element_blank(),
+                   panel.grid.minor.y = element_blank(),
+                   panel.grid.major.x = element_blank(),
+                   panel.grid.minor.x = element_blank(),
+                   panel.border = element_blank()
+                   ) +
+             coord_flip() +
+             scale_x_continuous(expand = c(0, expand.y), limits = c(ylim.min, ylim.max + 0.5)) +
+             ylab("log2(fold change)")
+  
+  sig1 <- ggplot(d, aes(y = yval - 0.2)) +
+          theme_bw() +
+          geom_text(aes(label = ifelse(
+              pvalue > 0.001,
+              round(pvalue, digits = 3),
+              format(pvalue, digits = 3, scientific = T)), x = 0), hjust = 0) +
+          # geom_text(label = 'sig', x = 0.1, y = nrow(d1) + 1.5) +
+          theme(axis.text = element_blank(),
+                axis.title = element_blank(),
+                axis.ticks = element_blank(),
+                panel.grid = element_blank(),
+                panel.border = element_blank()
+                ) +
+          xlim(0, 2) +
+          scale_y_continuous(expand = c(0, expand.y), limits = c(ylim.min, ylim.max))
+  
+  grid.newpage()
+  pushViewport(
+      viewport(
+          layout=grid.layout(2, 1,
+                             widths=unit(c(1),
+                                         'null'),
+                             heights=unit(c(1.2, 15),
+                                          "null"))))
+  
+  pushViewport(viewport(layout.pos.col=1, layout.pos.row=2))
+  g <- gridExtra:::gtable_cbind(
+       ggplotGrob(table_plot),
+       ggplotGrob(forest1),
+       ggplotGrob(sig1),
+       size = "max")
+  panels <- g$layout$r[grep("panel", g$layout$name)]
+  w <- c(2.3, 2, 0.6)
+  ws <- sum(w)
+  g$widths[panels] <- unit(w, "null")
+  grid.draw(g)
+  
+  popViewport()
+  
+  pushViewport(viewport(layout.pos.col = 1, layout.pos.row=1))
+  grid.lines(x = unit(c(0.01, 1), 'npc'),
+             y = unit(-0.1, 'npc'))
+  grid.lines(x = unit(c(0.01, 1), 'npc'),
+             y = unit(0.8, 'npc'),
+             gp = gpar(lwd = 2))
+  grid.text(x = unit(0.05, 'npc'), just = 'left',
+            y = unit(0.4, 'npc'),
+            label = paste0('Top metabolites in ', title))
+  grid.text(x = unit(0.65, 'npc'),
+            y = unit(0.4, 'npc'),
+            label = 'Fold change')
+  grid.text(x = unit(0.9, 'npc'),
+            y = unit(0.4, 'npc'),
+            label = 'P-value')
+})
+
+## pdf
+filename_pdf <- file.path(output_dir, 
+                          paste0('Differential_metabolites', '.pdf'))
+cairo_pdf(file = filename_pdf,
+          width = 8,
+          height = 4,
+          onefile = T)
+combs <- as.data.frame(combn(levels(g), 2))
+plyr::l_ply(combs, function(x) {
+  print(x)
+  d <- d.ht[, c(paste0('Games-Howell', ': ', paste0(rev(x), collapse = ':')),
+                        paste0('Fold: ', x[2], '/', x[1])), drop = F] %>%
+                        data.frame(check.names = F)
+  d[, 'label'] <- rownames(d.ht)
+  colnames(d) <- c('pvalue', 'fold', 'label')
+  d <- d %>% dplyr::mutate(
+             significant <- ifelse(pvalue >= 0.05, 'Not significant', 
+                                   ifelse(fold > 1.5, 
+                                          paste0('P<', 0.05, '&FC>', 1.5),
+                                          ifelse(fold < 1/1.5, 
+                                                 paste0('P<', 0.05, '&FC<1/', 1.5), 
+                                                 'Not significant'
+                                                 )))
+  ) %>% dplyr::filter(
+        !is.na(pvalue) & !is.na(fold) & is.finite(fold) & fold > 0
+        )
+  
+  ## sort by P value
+  d <- d[order(d$pvalue, decreasing = F), ]
+  ## select top n
+  d <- d[1:min(max_label, nrow(d)), ]
+  d <- d %>% mutate(
+       yval = nrow(d):1
+       )
+  
+  ylim.min <- 0.5
+  ylim.max <- nrow(d)
+  expand.y <- 1
+
+  ## labels in forest plot
+  # labels, could be extended to show more information
+  table_plot <- ggplot(d) +
+                theme_bw() +
+                geom_text(aes(label = label, x = 0, y = yval - 0.2), hjust = 0,
+                          ) +
+                theme(axis.text = element_blank(),
+                      axis.title = element_blank(),
+                      axis.ticks = element_blank(),
+                      panel.grid = element_blank(),
+                      panel.border = element_blank()
+                      ) +
+                scale_y_continuous(expand = c(0, expand.y), limits = c(ylim.min, ylim.max)) +
+                xlim(0, 3)
+  # Forest plot
+  forest1 <- ggplot(d, aes(x = yval, y = log2(fold))) +
+             theme_bw() +
+             geom_bar(stat = 'identity', position = 'dodge') +
+             geom_hline(yintercept = 0) +
+             theme(axis.line.x = element_line(),
+                   axis.text.y = element_blank(),
+                   axis.title.y = element_blank(),
+                   axis.ticks.y = element_blank(),
+                   panel.grid.major.y = element_blank(),
+                   panel.grid.minor.y = element_blank(),
+                   panel.grid.major.x = element_blank(),
+                   panel.grid.minor.x = element_blank(),
+                   panel.border = element_blank()
+                   ) +
+             coord_flip() +
+             scale_x_continuous(expand = c(0, expand.y), limits = c(ylim.min, ylim.max + 0.5)) +
+             ylab("log2(fold change)")
+  
+  sig1 <- ggplot(d, aes(y = yval - 0.2)) +
+          theme_bw() +
+          geom_text(aes(label = ifelse(
+              pvalue > 0.001,
+              round(pvalue, digits = 3),
+              format(pvalue, digits = 3, scientific = T)), x = 0), hjust = 0) +
+          # geom_text(label = 'sig', x = 0.1, y = nrow(d1) + 1.5) +
+          theme(axis.text = element_blank(),
+                axis.title = element_blank(),
+                axis.ticks = element_blank(),
+                panel.grid = element_blank(),
+                panel.border = element_blank()
+                ) +
+          xlim(0, 2) +
+          scale_y_continuous(expand = c(0, expand.y), limits = c(ylim.min, ylim.max))
+  
+  grid.newpage()
+  pushViewport(
+      viewport(
+          layout=grid.layout(2, 1,
+                             widths=unit(c(1),
+                                         'null'),
+                             heights=unit(c(1.2, 15),
+                                          "null"))))
+  
+  pushViewport(viewport(layout.pos.col=1, layout.pos.row=2))
+  g <- gridExtra:::gtable_cbind(
+       ggplotGrob(table_plot),
+       ggplotGrob(forest1),
+       ggplotGrob(sig1),
+       size = "max")
+  panels <- g$layout$r[grep("panel", g$layout$name)]
+  w <- c(2.3, 2, 0.6)
+  ws <- sum(w)
+  g$widths[panels] <- unit(w, "null")
+  grid.draw(g)
+  
+  popViewport()
+  
+  pushViewport(viewport(layout.pos.col = 1, layout.pos.row=1))
+  grid.lines(x = unit(c(0.01, 1), 'npc'),
+             y = unit(-0.1, 'npc'))
+  grid.lines(x = unit(c(0.01, 1), 'npc'),
+             y = unit(0.8, 'npc'),
+             gp = gpar(lwd = 2))
+  grid.text(x = unit(0.05, 'npc'), just = 'left',
+            y = unit(0.4, 'npc'),
+            label = paste0('Top metabolites in ', title))
+  grid.text(x = unit(0.65, 'npc'),
+            y = unit(0.4, 'npc'),
+            label = 'Fold change')
+  grid.text(x = unit(0.9, 'npc'),
+            y = unit(0.4, 'npc'),
+            label = 'P-value')
+})
+dev.off()
+
+## tiff
+combs <- as.data.frame(combn(levels(g), 2))
+plyr::l_ply(combs, function(x) {
+  filename_tiff <- file.path(
+    output_dir, 
+    fs::path_sanitize(paste0('Differential_metabolites', '_', x[2], '_', x[1], '.tiff'),
+                      replacement = '_'))
+  tiff(filename_tiff,
+       res = 300,
+       width = 8, height= 4, units = 'in',
+       compression = 'lzw+p')
+  d <- d.ht[, c(paste0("Games-Howell", ': ', paste0(rev(x), collapse = ':')), 
+                paste0('Fold: ', x[2], '/', x[1])), drop = F] %>% data.frame(check.names = F)
+  d[, 'label'] <- rownames(d.ht)
+  
+  colnames(d) <- c('pvalue', 'fold', 'label')
+  d <- d %>% dplyr::mutate(
+             significant <- ifelse(pvalue >= 0.05, 'Not significant', 
+                                   ifelse(fold > 1.5, 
+                                          paste0('P<', 0.05, '&FC>', 1.5),
+                                          ifelse(fold < 1/1.5, 
+                                                 paste0('P<', 0.05, '&FC<1/', 1.5), 
+                                                 'Not significant'
+                                                 )))
+  ) %>% dplyr::filter(
+        !is.na(pvalue) & !is.na(fold) & is.finite(fold) & fold > 0
+        )
+  
+  ## sort by P value
+  d <- d[order(d$pvalue, decreasing = F), ]
+  ## select top n
+  d <- d[1:min(max_label, nrow(d)), ]
+  d <- d %>% mutate(
+      yval = nrow(d):1
+  )
+  
+  ylim.min <- 0.5
+  ylim.max <- nrow(d)
+  expand.y <- 1
+
+  ## labels in forest plot
+  # labels, could be extended to show more information
+  table_plot <-
+      ggplot(d) +
+      theme_bw() +
+      geom_text(aes(label = label, x = 0, y = yval - 0.2), hjust = 0,
+                ) +
+      theme(axis.text = element_blank(),
+            axis.title = element_blank(),
+            axis.ticks = element_blank(),
+            panel.grid = element_blank(),
+            panel.border = element_blank()
+            ) +
+      scale_y_continuous(expand = c(0, expand.y), limits = c(ylim.min, ylim.max)) +
+      xlim(0, 3)
+  
+  
+  # Forest plot
+  forest1 <- ggplot(d, aes(x = yval, y = log2(fold))) +
+             theme_bw() +
+             geom_bar(stat = 'identity', position = 'dodge') +
+             geom_hline(yintercept = 0) +
+             theme(axis.line.x = element_line(),
+                   axis.text.y = element_blank(),
+                   axis.title.y = element_blank(),
+                   axis.ticks.y = element_blank(),
+                   panel.grid.major.y = element_blank(),
+                   panel.grid.minor.y = element_blank(),
+                   panel.grid.major.x = element_blank(),
+                   panel.grid.minor.x = element_blank(),
+                   panel.border = element_blank()
+                   ) +
+             coord_flip() +
+             scale_x_continuous(expand = c(0, expand.y), limits = c(ylim.min, ylim.max + 0.5)) +
+             ylab("log2(fold change)")
+  
+  sig1 <- ggplot(d, aes(y = yval - 0.2)) +
+          theme_bw() +
+          geom_text(aes(label = ifelse(
+              pvalue > 0.001,
+              round(pvalue, digits = 3),
+              format(pvalue, digits = 3, scientific = T)), x = 0), hjust = 0) +
+          # geom_text(label = 'sig', x = 0.1, y = nrow(d1) + 1.5) +
+          theme(axis.text = element_blank(),
+                axis.title = element_blank(),
+                axis.ticks = element_blank(),
+                panel.grid = element_blank(),
+                panel.border = element_blank()
+                ) +
+          xlim(0, 2) +
+          scale_y_continuous(expand = c(0, expand.y), limits = c(ylim.min, ylim.max))
+  
+  grid.newpage()
+  pushViewport(
+      viewport(
+          layout=grid.layout(2, 1,
+                             widths=unit(c(1),
+                                         'null'),
+                             heights=unit(c(1.2, 15),
+                                          "null"))))
+  
+  pushViewport(viewport(layout.pos.col=1, layout.pos.row=2))
+  g <- gridExtra:::gtable_cbind(
+       ggplotGrob(table_plot),
+       ggplotGrob(forest1),
+       ggplotGrob(sig1),
+       size = "max")
+  panels <- g$layout$r[grep("panel", g$layout$name)]
+  w <- c(2.3, 2, 0.6)
+  ws <- sum(w)
+  g$widths[panels] <- unit(w, "null")
+  grid.draw(g)
+  
+  popViewport()
+  
+  pushViewport(viewport(layout.pos.col = 1, layout.pos.row=1))
+  grid.lines(x = unit(c(0.01, 1), 'npc'),
+             y = unit(-0.1, 'npc'))
+  grid.lines(x = unit(c(0.01, 1), 'npc'),
+             y = unit(0.8, 'npc'),
+             gp = gpar(lwd = 2))
+  grid.text(x = unit(0.05, 'npc'), just = 'left',
+            y = unit(0.4, 'npc'),
+            label = paste0('Top metabolites in ', title))
+  grid.text(x = unit(0.65, 'npc'),
+            y = unit(0.4, 'npc'),
+            label = 'Fold change')
+  grid.text(x = unit(0.9, 'npc'),
+            y = unit(0.4, 'npc'),
+            label = 'P-value')
+  dev.off()
+})
+```
+
+```{r boxplot, results = 'asis', include = T, fig.width = 8, fig.height = 8}
+cat('\n\n')
+cat(
+  '##',
+  '箱状图(boxplot)',
+  '\n\n'
+  )
+output_dir <- 'output/'
+d <- d.data[c(1:38), ]
+g <- factor(d.sample$Group[1:38],
+                levels =c("Group1",
+                          "Group2",
+                          "Group3"
+                           ))
+unit <- 'peak~area'
+filename_pdf <- file.path(output_dir,
+                          paste0('Boxplot', '.pdf'))
+boxplot_list <- lapply(colnames(d), function(var.i) {
+  p_matrix <- matrix(1, nrow = nlevels(g), ncol = nlevels(g),
+                     dimnames = list(levels(g), levels(g))    
+                     ) 
+  ## multcompLetters work on lower.tri
+  p_matrix[lower.tri(p_matrix)] <- ht[var.i, stringr::str_detect(colnames(ht), "Games-Howell")] %>% unlist
+  sig_letters <- multcompView::multcompLetters(p_matrix, threshold = 0.05)$Letters
+  d_sig <- data.frame(g = names(sig_letters), 
+                y = 1.05 * max(d[, var.i], na.rm = T)-0.05*min(d[, var.i], na.rm = T),
+                label = sig_letters)    
+  ## y-axis label
+  ylab <- ifelse(unit == ' ',
+                 'Concentration',
+                 parse(text = paste0('Concentration (', unit, ')'))
+                 )
+  p <- ggplot(d, aes(x = g, y = eval(parse(text = paste0('`', var.i, '`'))))) +
+       geom_boxplot(outlier.size = 0, notch = F) +
+       geom_jitter(width = 0.1) + 
+       geom_text(data = d_sig,
+                 aes(x = g, y = y, label = sig_letters)
+                 ) + 
+       scale_y_continuous(expand = c(0.1, 0)) + 
+       labs(x = '', title = var.i, y = ylab) + 
+       theme_bw()
+})
+cairo_pdf(filename_pdf, width = 4, height = 4, onefile = T)
+for (i in 1:ncol(d)) {
+  grid.draw(boxplot_list[[i]])
+  }
+dev.off()
+# boxplot_shown
+boxplot_rank <- order(ht[, 'parametric pvalue'])
+d_order <- d[, boxplot_rank[1: 4]]
+ht_order <- ht[boxplot_rank[1: 4], , drop = F]
+## boxplot_shown_list
+boxplot_shown_list <- lapply(colnames(d_order), function(var.i) {
+  p_matrix <- matrix(1, nrow = nlevels(g), ncol = nlevels(g),
+                     dimnames = list(levels(g), levels(g))    
+  ) 
+  ## multcompLetters work on lower.tri
+  p_matrix[lower.tri(p_matrix)] <- ht_order[var.i, stringr::str_detect(colnames(ht_order), "Games-Howell")] %>% unlist
+  sig_letters <- multcompView::multcompLetters(p_matrix, threshold = 0.05)$Letters
+  d_sig <- data.frame(g = names(sig_letters), 
+                      y = 1.05 * max(d_order[, var.i], na.rm = T)-0.05*min(d_order[, var.i], na.rm = T),
+                      label = sig_letters)    
+  ## y-axis label
+  ylab <- ifelse(unit == ' ',
+                 'Concentration',
+                 parse(text = paste0('Concentration (', unit, ')'))
+                 )   
+  p <- ggplot(d, aes(x = g, y = eval(parse(text = paste0('`', var.i, '`'))))) +
+    geom_boxplot(outlier.size = 0, notch = F) +
+    geom_jitter(width = 0.1) + 
+    geom_text(data = d_sig,
+              aes(x = g, y = y, label = sig_letters)
+    ) + 
+    scale_y_continuous(expand = c(0.1, 0)) + 
+    labs(x = '', title = var.i, y = ylab) + 
+    theme_bw()
+})
+ncols <- 2
+nrows <- ceiling(length(boxplot_shown_list) / ncols)
+boxplot_shown_list <- list(
+  boxplot = gridExtra::marrangeGrob(boxplot_shown_list, nrow= 2, ncol= 2, top = 4)
+)
+## pdf
+filename_pdf <- file.path(output_dir,
+                          paste0('Boxplot', '_report.pdf'))
+cairo_pdf(filename = filename_pdf, width = 8, height = 8,
+          onefile = T)
+## tiff
+for (i in 1:length(boxplot_shown_list)) {
+  filename_tiff <- file.path(output_dir,
+                             paste0('Boxplot', '_report_', i, '.tiff'))
+  print(boxplot_shown_list[[i]])
+  ggsave(filename_tiff, boxplot_shown_list[[i]],
+         device = 'tiff', dpi = 300,
+         width = 8, height = 8, units = 'in',
+         compression = 'lzw+p')
+}
+dev.off()
+## print
+print(boxplot_shown_list[[1]])
+```
+
+```{r barplot, results = 'asis', include = T, fig.width = 8, fig.height = 8}
+cat('\n\n')
+cat(
+  '##',
+  '柱状图(barplot)',
+  '\n\n'
+  )
+output_dir <- 'output/'
+d <- d.data[c(1:38), ]
+g <- factor(d.sample$Group[1:38],
+                levels =c("Group1",
+                          "Group2",
+                          "Group3"))
+filename_pdf <- file.path(output_dir,
+                          paste0('Barplot', '.pdf'))
+unit <- 'peak~area'
+conf.int <- 0.95
+mult <- qnorm((1 + conf.int)/2)
+if (abs(conf.int - 0.68) < 0.01) mult = 1
+x_angle = 0
+h_just = 0.5
+v_just = 0
+
+barplot_list <- lapply(colnames(d), function(var.i) {
+  p_matrix <- matrix(1, nrow = nlevels(g), ncol = nlevels(g),
+                     dimnames = list(levels(g), levels(g))    
+                     ) 
+  ## multcompLetters work on lower.tri
+  p_matrix[lower.tri(p_matrix)] <- ht[var.i, stringr::str_detect(colnames(ht), "Games-Howell")] %>% unlist
+  sig_letters <- multcompView::multcompLetters(p_matrix, threshold = 0.05)$Letters
+  ymax <- vaggregate(d[, var.i], g, mean_se) %>%
+      unlist %>% max
+  d_sig <- data.frame(group = names(sig_letters), 
+                      # y = ymax * 1.05,
+                      # y = 1.05 * max(d[, var.i]) - 0.05 * min(d[, var.i]),
+                      # y = 1.1 * max(vaggregate(d[, var.i], g, mean_cl_normal)[3, ] %>% unlist),
+                      y = 1.05 * max(d[, var.i], na.rm = T) - 0.05 * min(d[, var.i], na.rm = T),
+                      label = sig_letters)   
+  ylab <- ifelse(unit == ' ',
+                 'Concentration',
+                 parse(text = paste0('Concentration (', unit, ')'))
+                 )  
+  p <- ggplot(d,
+              aes(x = g,
+                  y = eval(parse(
+                      text = paste0('`', var.i, '`')
+                  )))
+                  ) +
+       stat_summary(fun = mean,
+                    geom = 'bar',
+                    fill = 'gray80',
+                    color = 'black'
+                    ) +
+       stat_summary(fun.data = mean_se,
+                    fun.args = list(mult = mult),
+                    geom = 'errorbar',
+                    width = 0.2
+                    ) +
+       geom_jitter(width = 0.1) + 
+       geom_text(data = d_sig,
+                 aes(x = group, y = y, label = label)
+                 ) + 
+       scale_y_continuous(expand = c(0.1, 0)) +
+       labs(x = '', 
+            y = ylab,
+            title = var.i
+            ) +
+       theme(axis.text.x = element_text(angle = x_angle, vjust = v_just, hjust = h_just)) +
+       theme_bw()
+})
+cairo_pdf(filename_pdf, width = 4, height = 4, onefile = T)
+for (i in 1:ncol(d)) {
+  grid.draw(barplot_list[[i]])
+  }
+dev.off()
+# barplot_shown
+barplot_rank <- order(ht[, 'parametric pvalue'])
+d_order <- d[, barplot_rank[1: 4]]
+ht_order <- ht[barplot_rank[1: 4], , drop = F]
+## boxplot_shown_list
+barplot_shown_list <- lapply(colnames(d_order), function(var.i) {
+  p_matrix <- matrix(1, nrow = nlevels(g), ncol = nlevels(g),
+                     dimnames = list(levels(g), levels(g))    
+                     ) 
+  ## multcompLetters work on lower.tri
+  p_matrix[lower.tri(p_matrix)] <- ht_order[var.i, stringr::str_detect(colnames(ht_order), "Games-Howell")] %>% unlist
+  sig_letters <- multcompView::multcompLetters(p_matrix, threshold = 0.05)$Letters
+  ymax <- vaggregate(d_order[, var.i], g, mean_se) %>%
+      unlist %>% max
+  d_sig <- data.frame(group = names(sig_letters), 
+                      # y = ymax * 1.05,
+                      # y = 1.05 * max(d[, var.i]) - 0.05 * min(d[, var.i]),
+                      # y = 1.1 * max(vaggregate(d[, var.i], g, mean_cl_normal)[3, ] %>% unlist),
+                      y = 1.05 * max(d_order[, var.i], na.rm = T) - 0.05 * min(d_order[, var.i], na.rm = T),
+                      label = sig_letters)   
+  ylab <- ifelse(unit == ' ',
+                 'Concentration',
+                 parse(text = paste0('Concentration (', unit, ')'))
+                 )  
+  p <- ggplot(d,
+              aes(x = g,
+                  y = eval(parse(
+                      text = paste0('`', var.i, '`')
+                  )))
+                  ) +
+       stat_summary(fun = mean,
+                    geom = 'bar',
+                    fill = 'gray80',
+                    color = 'black'
+                    ) +
+       stat_summary(fun.data = mean_se,
+                    fun.args = list(mult = mult),
+                    geom = 'errorbar',
+                    width = 0.2
+                    ) +
+       geom_jitter(width = 0.1) + 
+       geom_text(data = d_sig,
+                 aes(x = group, y = y, label = label)
+                 ) + 
+       scale_y_continuous(expand = c(0.1, 0)) +
+       labs(x = '', 
+            y = ylab,
+            title = var.i
+            ) +
+       theme(axis.text.x = element_text(angle = x_angle, vjust = v_just, hjust = h_just)) +
+       theme_bw()
+})
+ncols <- 2
+nrows <- ceiling(length(barplot_shown_list) / ncols)
+barplot_shown_list <- list(
+  barplot = gridExtra::marrangeGrob(barplot_shown_list, nrow= 2, ncol= 2, top = 4)
+)
+## pdf
+filename_pdf <- file.path(output_dir,
+                          paste0('Barplot', '_report.pdf'))
+cairo_pdf(filename = filename_pdf, width = 8, height = 8,
+          onefile = T)
+## tiff
+for (i in 1:length(barplot_shown_list)) {
+  filename_tiff <- file.path(output_dir,
+                             paste0('Barplot', '_report_', i, '.tiff'))
+  print(barplot_shown_list[[i]])
+  ggsave(filename_tiff, barplot_shown_list[[i]],
+         device = 'tiff', dpi = 300,
+         width = 8, height = 8, units = 'in',
+         compression = 'lzw+p')
+}
+dev.off()
+## print
+print(barplot_shown_list[[1]])
+```
+
